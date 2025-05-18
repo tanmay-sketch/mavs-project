@@ -1,10 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Avatar from '@mui/material/Avatar';
 import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
 
 export default function PlayerCard({ player }) {
+  const navigate = useNavigate();
+  
   console.log('PlayerCard received player:', player); // Log the player data received by the card
   
   // Helper to convert inches to feet/inches
@@ -14,10 +17,15 @@ export default function PlayerCard({ player }) {
     return `${ft}'${inch}"`;
   };
   
+  const handleClick = () => {
+    navigate(`/player/${player.playerId}`, { state: { player } });
+  };
+  
   return (
     <Card 
       variant="outlined" 
-      className="relative max-w-xs w-full mx-auto shadow-sm bg-transparent dark:border-primary-700"
+      className="relative max-w-xs w-full mx-auto shadow-sm bg-transparent dark:border-primary-700 cursor-pointer hover:border-primary-500 transition-colors duration-200"
+      onClick={handleClick}
     >
       {/* Rank Badge */}
       <div className="absolute top-3 left-3 bg-primary-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-lg">

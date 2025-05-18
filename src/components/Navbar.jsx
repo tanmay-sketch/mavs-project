@@ -1,6 +1,7 @@
 "use client"
 
-import * as React from "react"
+import React from "react"
+import { Link } from "react-router-dom"
 import AppBar from "@mui/material/AppBar"
 import Box from "@mui/material/Box"
 import Toolbar from "@mui/material/Toolbar"
@@ -38,12 +39,12 @@ export default function Navbar() {
       <List>
         {navItems.map((item) => (
           <ListItem key={item.name} disablePadding className="mb-2">
-            <a
-              href={item.path}
+            <Link
+              to={item.path}
               className="text-black dark:text-primary-100 font-bold text-lg hover:underline transition w-full py-2"
             >
               {item.name}
-            </a>
+            </Link>
           </ListItem>
         ))}
         <ListItem className="mt-4 flex justify-center">
@@ -77,13 +78,13 @@ export default function Navbar() {
           {!isMobile && (
             <div className="flex gap-6 items-center">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.name}
-                  href={item.path}
+                  to={item.path}
                   className="text-black dark:text-primary-100 font-medium text-base hover:underline transition"
                 >
                   {item.name}
-                </a>
+                </Link>
               ))}
               <IconButton
                 onClick={toggleTheme}
