@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getFullSeasonAverages, playerData } from '../utils/loadPlayerData';
 import PlayerDetailsSection from './PlayerDetailsSection';
-import ScoutNotes from './ScoutNotes';
+import { ScoutRankings, ScoutReports } from './ScoutNotes';
 
 export default function PlayerProfile() {
   const location = useLocation();
@@ -25,6 +25,9 @@ export default function PlayerProfile() {
       }
     }
     loadFullStats();
+
+    // Scroll to top when component mounts or player changes
+    window.scrollTo(0, 0);
   }, [player]);
 
   const formatHeight = (inches) => {
@@ -39,35 +42,43 @@ export default function PlayerProfile() {
 
   if (!player) {
     return (
-      <div className="pt-16 min-h-screen bg-white dark:bg-primary-900">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-primary-900 dark:text-primary-100">
-            Player not found
+      <div className="min-h-screen bg-white dark:bg-primary-900">
+        <main className="pt-16">
+          <div className="container mx-auto px-4 py-8">
+            <div className="text-center text-primary-900 dark:text-primary-100">
+              Player not found
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="pt-16 min-h-screen bg-white dark:bg-primary-900">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Player Details */}
-          <PlayerDetailsSection 
-            player={player}
-            fullStats={fullStats}
-            isLoading={isLoading}
-            formatHeight={formatHeight}
-            formatPercentage={formatPercentage}
-          />
+    <div className="min-h-screen bg-white dark:bg-primary-900">
+      <main className="pt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="space-y-8">
+            {/* Top Section - Player Details and Rankings side by side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Player Details */}
+              <PlayerDetailsSection 
+                player={player}
+                fullStats={fullStats}
+                isLoading={isLoading}
+                formatHeight={formatHeight}
+                formatPercentage={formatPercentage}
+              />
 
-          {/* Right Column - Scout Notes */}
-          <div className="space-y-6">
-            <ScoutNotes player={player} />
+              {/* Scout Rankings */}
+              <ScoutRankings player={player} />
+            </div>
+
+            {/* Bottom Section - Full width Scout Reports */}
+            <ScoutReports />
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 } 
