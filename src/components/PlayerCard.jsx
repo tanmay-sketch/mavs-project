@@ -27,10 +27,12 @@ export default function PlayerCard({ player }) {
       className="relative max-w-xs w-full mx-auto shadow-sm bg-transparent dark:border-primary-700 cursor-pointer hover:border-primary-500 transition-colors duration-200"
       onClick={handleClick}
     >
-      {/* Rank Badge */}
-      <div className="absolute top-3 left-3 bg-primary-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-lg">
-        {player.rank}
-      </div>
+      {/* ESPN Rank Badge */}
+      {player.rank && (
+        <div className="absolute top-3 left-3 bg-primary-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-lg">
+          #{player.rank}
+        </div>
+      )}
 
       <CardContent className="p-6">
         <div className="flex flex-col items-center space-y-4">

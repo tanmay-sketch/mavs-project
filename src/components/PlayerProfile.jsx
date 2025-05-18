@@ -37,7 +37,7 @@ export default function PlayerProfile() {
   };
 
   const formatPercentage = (value) => {
-    return value ? `${value.toFixed(1)}%` : 'N/A';
+    return value !== undefined && value !== null ? `${value.toFixed(1)}%` : 'N/A';
   };
 
   if (!player) {
@@ -75,7 +75,7 @@ export default function PlayerProfile() {
             </div>
 
             {/* Bottom Section - Full width Scout Reports */}
-            <ScoutReports />
+            <ScoutReports player={player} />
           </div>
         </div>
       </main>

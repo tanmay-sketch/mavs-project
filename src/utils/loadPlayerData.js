@@ -15,10 +15,20 @@ function getBioData(players) {
 }
 
 function getScoutRankings(players) {
-    return Object.entries(players.scoutRankings).reduce((acc, [id, ranking]) => {
-        acc[id] = {
-            rank: ranking['ESPN Rank'] || 'N/A'
-        };
+    // Create a mapping of rankings by playerId
+    return players.scoutRankings.reduce((acc, ranking) => {
+        acc[ranking.playerId] = ranking;
+        return acc;
+    }, {});
+}
+
+function getScoutingReports(players) {
+    // Create a mapping of reports by playerId
+    return players.scoutingReports.reduce((acc, report) => {
+        if (!acc[report.playerId]) {
+            acc[report.playerId] = [];
+        }
+        acc[report.playerId].push(report);
         return acc;
     }, {});
 }
@@ -40,8 +50,6 @@ function getSeasonAverages(players) {
         return acc;
     }, {});
 
-    // console.log('Name to ID mapping:', nameToId);
-
     // Group season logs by player name (since that's what we have in the logs)
     const playerSeasonLogs = Object.values(players.seasonLogs).reduce((acc, season) => {
         const playerName = season.age;
@@ -51,8 +59,6 @@ function getSeasonAverages(players) {
         acc[playerName].push(season);
         return acc;
     }, {});
-
-    console.log('Grouped season logs by name:', playerSeasonLogs);
 
     // Calculate averages for each player
     const averages = Object.entries(playerSeasonLogs).reduce((acc, [playerName, seasons]) => {
@@ -83,13 +89,12 @@ function getSeasonAverages(players) {
         return acc;
     }, {});
 
-    console.log('Final averages:', averages);
     return averages;
 }
 
 async function getFullSeasonAverages(players, playerId) {
     // Find the player's name from their ID
-    const player = Object.values(players.bio).find(p => p.playerId === playerId);
+    const player = players.bio.find(p => p.playerId === playerId);
     if (!player) {
         console.log('Player not found:', playerId);
         return null;
@@ -113,7 +118,6 @@ async function getFullSeasonAverages(players, playerId) {
         fgPercent: sum.fgPercent + Number(season['FG%'] || 0),
         threePm: sum.threePm + Number(season['3PM'] || 0),
         threePa: sum.threePa + Number(season['3PA'] || 0),
-        threePercent: sum.threePercent + Number(season['3P%'] || 0),
         ft: sum.ft + Number(season.FT || 0),
         fta: sum.fta + Number(season.FTA || 0),
         ftPercent: sum.ftPercent + Number(season.FTP || 0),
@@ -152,13 +156,13 @@ async function getFullSeasonAverages(players, playerId) {
         // Shooting averages
         fgm: Number((totalStats.fgm / numSeasons).toFixed(1)),
         fga: Number((totalStats.fga / numSeasons).toFixed(1)),
-        fgPercent: Number((totalStats.fgPercent / numSeasons).toFixed(1)),
+        fgPercent: Number((totalStats.fgm / totalStats.fga * 100).toFixed(1)),
         threePm: Number((totalStats.threePm / numSeasons).toFixed(1)),
         threePa: Number((totalStats.threePa / numSeasons).toFixed(1)),
-        threePercent: Number((totalStats.threePercent / numSeasons).toFixed(1)),
+        threePercent: Number((totalStats.threePm / totalStats.threePa * 100).toFixed(1)),
         ft: Number((totalStats.ft / numSeasons).toFixed(1)),
         fta: Number((totalStats.fta / numSeasons).toFixed(1)),
-        ftPercent: Number((totalStats.ftPercent / numSeasons).toFixed(1)),
+        ftPercent: Number((totalStats.ft / totalStats.fta * 100).toFixed(1)),
         
         // Rebound averages
         orb: Number((totalStats.orb / numSeasons).toFixed(1)),
@@ -192,6 +196,7 @@ async function getFullSeasonAverages(players, playerId) {
 async function loadPlayerData() {
     const bioData = getBioData(playerData);
     const rankings = getScoutRankings(playerData);
+    const scoutingReports = getScoutingReports(playerData);
     const measurements = getMeasurements(playerData);
     const seasonAverages = getSeasonAverages(playerData);
 
@@ -202,7 +207,8 @@ async function loadPlayerData() {
         
         return {
             ...bioData[id],
-            ...rankings[id],
+            ...rankings[playerId],
+            scoutingReports: scoutingReports[playerId] || [],
             ...measurements[id],
             ...stats
         };
