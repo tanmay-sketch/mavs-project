@@ -39,7 +39,7 @@ export default function PlayerDetailsSection({ player, fullStats, isLoading, for
             </div>
             <div>
               <p className="text-sm text-secondary-500 dark:text-secondary-400">Rebounds</p>
-              <p className="text-lg font-semibold text-primary-900 dark:text-primary-100">{fullStats.reb || 'N/A'}</p>
+              <p className="text-lg font-semibold text-primary-900 dark:text-primary-100">{fullStats.trb || 'N/A'}</p>
             </div>
             <div>
               <p className="text-sm text-secondary-500 dark:text-secondary-400">Assists</p>

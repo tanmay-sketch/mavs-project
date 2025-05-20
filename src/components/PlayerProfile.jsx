@@ -3,6 +3,47 @@ import { useLocation } from 'react-router-dom';
 import { getFullSeasonAverages, playerData } from '../utils/loadPlayerData';
 import PlayerDetailsSection from './PlayerDetailsSection';
 import { ScoutRankings, ScoutReports } from './ScoutNotes';
+import { Unstable_RadarChart as RadarChart } from '@mui/x-charts/RadarChart';
+
+function PlayerStatsRadar({ stats, player }) {
+  if (!stats || Object.keys(stats).length === 0) return null;
+
+  console.log(stats);
+
+  const radarData = [
+    stats.pts || 0,
+    stats.ast || 0,
+    stats.trb || 0,
+    stats.blk || 0,
+    stats.stl || 0,
+  ]
+  
+  return (
+    <div className="bg-white dark:bg-primary-800 rounded-lg p-4 shadow-lg">
+      <h3 className="text-lg font-semibold mb-4 text-primary-900 dark:text-primary-100">Season Averages</h3>
+      <RadarChart
+        height={300}
+        series={[
+          {
+            // label: player?.name || 'Player',
+            data: radarData,
+          },
+        ]}
+        radar={{
+          max: 0,
+          metrics: [
+            { name: 'Points', max: 40 },
+            { name: 'Assists', max: 15 },
+            { name: 'Rebounds', max: 25 },
+            { name: 'Blocks', max: 15 },
+            { name: 'Steals', max: 15 },
+            { name: 'FG%', max: 100 },
+          ],
+        }}
+      />
+    </div>
+  );
+}
 
 export default function PlayerProfile() {
   const location = useLocation();
@@ -73,6 +114,9 @@ export default function PlayerProfile() {
               {/* Scout Rankings */}
               <ScoutRankings player={player} />
             </div>
+
+            {/* Stats Radar Chart */}
+            <PlayerStatsRadar stats={fullStats} player={player}/>
 
             {/* Bottom Section - Full width Scout Reports */}
             <ScoutReports player={player} />
