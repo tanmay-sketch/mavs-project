@@ -1,54 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { getFullSeasonAverages, playerData } from '../utils/loadPlayerData';
+import { getPlayerStats } from '../utils/loadPlayerData';
 import PlayerDetailsSection from './PlayerDetailsSection';
 import { ScoutRankings, ScoutReports } from './ScoutNotes';
-import { Unstable_RadarChart as RadarChart } from '@mui/x-charts/RadarChart';
-
-function PlayerStatsRadar({ stats, player }) {
-  if (!stats || Object.keys(stats).length === 0) return null;
-
-  console.log(stats);
-
-  const radarData = [
-    stats.pts || 0,
-    stats.ast || 0,
-    stats.trb || 0,
-    stats.blk || 0,
-    stats.stl || 0,
-  ]
-  
-  return (
-    <div className="bg-white dark:bg-primary-800 rounded-lg p-4 shadow-lg">
-      <h3 className="text-lg font-semibold mb-4 text-primary-900 dark:text-primary-100">Season Averages</h3>
-      <RadarChart
-        height={300}
-        series={[
-          {
-            // label: player?.name || 'Player',
-            data: radarData,
-          },
-        ]}
-        radar={{
-          max: 0,
-          metrics: [
-            { name: 'Points', max: 40 },
-            { name: 'Assists', max: 15 },
-            { name: 'Rebounds', max: 25 },
-            { name: 'Blocks', max: 15 },
-            { name: 'Steals', max: 15 },
-            { name: 'FG%', max: 100 },
-          ],
-        }}
-      />
-    </div>
-  );
-}
+import PlayerStatsRadar from './PlayerStatsRadar';
 
 export default function PlayerProfile() {
   const location = useLocation();
   const player = location.state?.player;
   const [fullStats, setFullStats] = useState({});
+  const [logsBySeason, setLogsBySeason] = useState({});
+  const [seasons, setSeasons] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -56,11 +18,21 @@ export default function PlayerProfile() {
       if (player) {
         setIsLoading(true);
         try {
-          const playerFullStats = await getFullSeasonAverages(playerData, player.playerId);
-          setFullStats(playerFullStats || {});
+          const playerStats = getPlayerStats(player.playerId);
+          if (playerStats) {
+            setFullStats(playerStats.seasonAverages || {});
+            setLogsBySeason(playerStats.logsBySeason || {});
+            setSeasons(Object.keys(playerStats.logsBySeason || {}).sort((a, b) => b - a)); // Sort seasons descending
+          } else {
+            setFullStats({});
+            setLogsBySeason({});
+            setSeasons([]);
+          }
         } catch (error) {
           console.error('Error loading full stats:', error);
           setFullStats({});
+          setLogsBySeason({});
+          setSeasons([]);
         }
         setIsLoading(false);
       }
@@ -116,7 +88,11 @@ export default function PlayerProfile() {
             </div>
 
             {/* Stats Radar Chart */}
-            <PlayerStatsRadar stats={fullStats} player={player}/>
+            <PlayerStatsRadar 
+              stats={fullStats} 
+              logsBySeason={logsBySeason}
+              seasons={seasons}
+            />
 
             {/* Bottom Section - Full width Scout Reports */}
             <ScoutReports player={player} />
