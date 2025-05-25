@@ -1,3 +1,8 @@
+// ===================================================================
+// Board component
+// Path to this file: /src/components/Board.jsx
+// ===================================================================
+
 import React, { useEffect, useState, useRef, useCallback, Suspense, lazy } from 'react';
 import { loadPlayerData } from '../utils/loadPlayerData';
 

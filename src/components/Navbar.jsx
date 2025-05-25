@@ -1,3 +1,8 @@
+// ===================================================================
+// Navbar component
+// Path to this file: /src/components/Navbar.jsx
+// ===================================================================
+
 "use client"
 
 import React from "react"

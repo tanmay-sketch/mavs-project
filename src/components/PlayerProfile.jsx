@@ -1,3 +1,8 @@
+// ===================================================================
+// PlayerProfile component
+// Path to this file: /src/components/PlayerProfile.jsx
+// ===================================================================
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getPlayerStats } from '../utils/loadPlayerData';

@@ -1,3 +1,8 @@
+// ===================================================================
+// Hero component seen on the home page
+// Path to this file: /src/components/Hero.jsx
+// ===================================================================
+
 import React from "react";
 
 export default function Hero() {
