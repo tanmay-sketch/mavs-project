@@ -1,6 +1,6 @@
 import React from 'react';
 import Avatar from '@mui/material/Avatar';
-import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
+import PersonIcon from '@mui/icons-material/Person';
 import StatCard from './StatCard';
 
 export default function PlayerDetailsSection({ player, fullStats, isLoading, formatHeight, formatPercentage }) {
@@ -13,7 +13,7 @@ export default function PlayerDetailsSection({ player, fullStats, isLoading, for
           sx={{ width: 120, height: 120 }}
           className="ring-2 ring-primary-200 dark:ring-primary-700"
         >
-          <SportsBasketballIcon sx={{ fontSize: 60 }} />
+          <PersonIcon sx={{ fontSize: 60 }} />
         </Avatar>
         <div>
           <h1 className="text-2xl font-bold text-primary-900 dark:text-primary-100">{player.name}</h1>
