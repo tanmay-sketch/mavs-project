@@ -1,124 +1,131 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import PlayerCard from './PlayerCard';
-import SearchAndFilter from './SearchAndFilter';
+import React, { useEffect, useState, useRef, useCallback, Suspense, lazy } from 'react';
 import { loadPlayerData } from '../utils/loadPlayerData';
 
+// Lazy load components
+const SearchAndFilter = lazy(() => import('./SearchAndFilter'));
+const PlayerCard = lazy(() => import('./PlayerCard'));
+
+// Loading fallback component
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center py-4">
+    <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-200 border-t-primary-700" />
+  </div>
+);
+
+// Board component that displays the big draft board
 export default function Board() {
-  const [players, setPlayers] = useState([]);
-  const [filteredPlayers, setFilteredPlayers] = useState([]);
-  const [displayedPlayers, setDisplayedPlayers] = useState([]);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [sortBy, setSortBy] = useState('rank');
+  const [allPlayers, setAllPlayers] = useState([]);
+  const [visiblePlayers, setVisiblePlayers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState('rank');
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
   const loadingRef = useRef(null);
   const PLAYERS_PER_PAGE = 12;
 
+  // Load initial data
   useEffect(() => {
     const loadData = async () => {
-      setInitialLoading(true);
+      setLoading(true);
       try {
-        const playerData = await loadPlayerData(sortBy);
-        setPlayers(playerData);
-        setFilteredPlayers(playerData);
-        setDisplayedPlayers(playerData.slice(0, PLAYERS_PER_PAGE));
+        const data = await loadPlayerData(sortBy);
+        setAllPlayers(data);
+        setVisiblePlayers([]);
+        setHasMore(true);
       } catch (error) {
         console.error('Error loading player data:', error);
-      } finally {
-        setInitialLoading(false);
       }
+      setLoading(false);
     };
     loadData();
   }, [sortBy]);
 
+  // Load more players when scrolling
+  const loadMorePlayers = useCallback(() => {
+    if (!loading && hasMore) {
+      const start = visiblePlayers.length;
+      const filtered = allPlayers
+        .filter(player => player.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .slice(start, start + PLAYERS_PER_PAGE);
+
+      if (filtered.length === 0) {
+        setHasMore(false);
+        return;
+      }
+
+      setVisiblePlayers(prev => [...prev, ...filtered]);
+    }
+  }, [loading, hasMore, visiblePlayers.length, allPlayers, searchQuery]);
+
+  // Handle search
   useEffect(() => {
-    const filtered = players.filter(player =>
-      player.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredPlayers(filtered);
-    setDisplayedPlayers(filtered.slice(0, PLAYERS_PER_PAGE));
-    setPage(1);
-  }, [searchQuery, players]);
+    if (searchQuery !== '') {
+      setVisiblePlayers([]);
+      setHasMore(true);
+      const filtered = allPlayers
+        .filter(player => player.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        .slice(0, PLAYERS_PER_PAGE);
+      
+      setVisiblePlayers(filtered);
+      setHasMore(filtered.length === PLAYERS_PER_PAGE);
+    } else {
+      setVisiblePlayers(allPlayers.slice(0, PLAYERS_PER_PAGE));
+      setHasMore(allPlayers.length > PLAYERS_PER_PAGE);
+    }
+  }, [searchQuery, allPlayers]);
 
-  const loadMorePlayers = useCallback(async () => {
-    if (isLoadingMore) return;
-    
-    setIsLoadingMore(true);
-    const nextPage = page + 1;
-    const start = (nextPage - 1) * PLAYERS_PER_PAGE;
-    const end = start + PLAYERS_PER_PAGE;
-    
-    // Simulate network delay for smooth loading animation
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    setDisplayedPlayers(prev => [
-      ...prev,
-      ...filteredPlayers.slice(start, end)
-    ]);
-    setPage(nextPage);
-    setIsLoadingMore(false);
-  }, [page, filteredPlayers, isLoadingMore]);
-
+  // Intersection Observer for infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0];
-        if (first.isIntersecting && displayedPlayers.length < filteredPlayers.length) {
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
           loadMorePlayers();
         }
       },
       { threshold: 0.1 }
     );
 
-    const currentRef = loadingRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
+    if (loadingRef.current) {
+      observer.observe(loadingRef.current);
     }
 
-    return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
-    };
-  }, [loadMorePlayers, displayedPlayers.length, filteredPlayers.length]);
+    return () => observer.disconnect();
+  }, [loadMorePlayers, hasMore, loading]);
 
-  const handleSearchChange = (query) => {
-    setSearchQuery(query);
-  };
+  // Get total count for filter stats
+  const totalFilteredCount = allPlayers.filter(player =>
+    player.name.toLowerCase().includes(searchQuery.toLowerCase())
+  ).length;
 
   return (
     <div className="pt-16 bg-gray-100 dark:bg-primary-900 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <SearchAndFilter
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          totalPlayers={players.length}
-          filteredCount={filteredPlayers.length}
-        />
+        <Suspense fallback={<LoadingSpinner />}>
+          <SearchAndFilter
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            totalPlayers={allPlayers.length}
+            filteredCount={totalFilteredCount}
+          />
+        </Suspense>
         
-        {initialLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-700"></div>
-          </div>
+        {loading && visiblePlayers.length === 0 ? (
+          <LoadingSpinner />
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {displayedPlayers.map((player) => (
-                <PlayerCard key={player.playerId} player={player} />
-              ))}
+              <Suspense fallback={<LoadingSpinner />}>
+                {visiblePlayers.map(player => (
+                  <PlayerCard key={player.playerId} player={player} />
+                ))}
+              </Suspense>
             </div>
             
-            {displayedPlayers.length < filteredPlayers.length && (
-              <div 
-                ref={loadingRef}
-                className="flex justify-center items-center py-8"
-              >
-                {isLoadingMore && (
-                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-200 border-t-primary-700"></div>
-                )}
+            {hasMore && (
+              <div ref={loadingRef}>
+                <LoadingSpinner />
               </div>
             )}
           </>
