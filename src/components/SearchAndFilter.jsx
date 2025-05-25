@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import CloseIcon from '@mui/icons-material/Close';
@@ -24,6 +24,25 @@ export default function SearchAndFilter({
   totalPlayers,
   filteredCount 
 }) {
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      onSearchChange(localSearchQuery);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [localSearchQuery, onSearchChange]);
+
+  const handleSearchChange = (value) => {
+    setLocalSearchQuery(value);
+  };
+
+  const handleClear = () => {
+    setLocalSearchQuery('');
+    onSearchChange('');
+  };
+
   return (
     <div className="p-6 mb-6 rounded-lg bg-white dark:bg-primary-900 border border-solid border-primary-500/50 dark:border-primary-300/50 shadow-sm">
       <div className="flex flex-col sm:flex-row gap-4">
@@ -32,8 +51,8 @@ export default function SearchAndFilter({
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-900 dark:text-primary-100" />
           <input
             type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={localSearchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search players..."
             className="w-full pl-10 h-11 rounded-lg bg-primary-50 dark:bg-primary-800
               text-primary-900 dark:text-primary-100
@@ -41,9 +60,9 @@ export default function SearchAndFilter({
               focus:outline-none focus:ring-2 focus:ring-primary-500
               pr-10"
           />
-          {searchQuery && (
+          {localSearchQuery && (
             <button
-              onClick={() => onSearchChange('')}
+              onClick={handleClear}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full
                 hover:bg-primary-200 dark:hover:bg-primary-700
                 text-primary-500 dark:text-primary-400
@@ -82,9 +101,9 @@ export default function SearchAndFilter({
       <div className="mt-4 text-sm text-primary-600 dark:text-primary-300">
         Showing <span className="font-medium text-primary-900 dark:text-primary-100">{filteredCount}</span> of{" "}
         <span className="font-medium text-primary-900 dark:text-primary-100">{totalPlayers}</span> players
-        {searchQuery && (
+        {localSearchQuery && (
           <span className="ml-2">
-            for <span className="font-medium text-primary-500">{`"${searchQuery}"`}</span>
+            for <span className="font-medium text-primary-500">{`"${localSearchQuery}"`}</span>
           </span>
         )}
       </div>
