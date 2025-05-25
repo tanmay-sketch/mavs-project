@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Avatar from '@mui/material/Avatar';
-import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
+import PersonIcon from '@mui/icons-material/Person';
 
 export default function PlayerCard({ player }) {
   const navigate = useNavigate();
   
-  console.log('PlayerCard received player:', player); // Log the player data received by the card
+  console.log('PlayerCard received player:', player); 
   
-  // Helper to convert inches to feet/inches
   const formatHeight = (inches) => {
     const ft = Math.floor(inches / 12);
     const inch = inches % 12;
@@ -20,7 +19,7 @@ export default function PlayerCard({ player }) {
   const handleClick = () => {
     navigate(`/player/${player.playerId}`, { state: { player } });
   };
-  
+
   return (
     <Card 
       variant="outlined" 
@@ -39,11 +38,11 @@ export default function PlayerCard({ player }) {
           {/* Avatar */}
           <Avatar 
             src={player.photoUrl} 
-            alt={player.name} 
+            alt={player.name}
             sx={{ width: 96, height: 96 }}
             className="ring-2 ring-primary-200 dark:ring-primary-700"
           >
-            <SportsBasketballIcon sx={{ fontSize: 48 }} />
+            <PersonIcon sx={{ fontSize: 48 }} />
           </Avatar>
           
           {/* Name and Team */}
