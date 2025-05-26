@@ -1,3 +1,8 @@
+// ===================================================================
+// loadPlayerData.js
+// Path to this file: /src/utils/loadPlayerData.js
+// ===================================================================
+
 import playerData from '../data/project_data.json';
 
 function getBioData(players) {

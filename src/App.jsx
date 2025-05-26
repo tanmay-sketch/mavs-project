@@ -1,5 +1,6 @@
 // ===================================================================
 // Main App component
+// Path to this file: /src/App.jsx
 // ===================================================================
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
