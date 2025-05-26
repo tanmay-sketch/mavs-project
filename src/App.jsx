@@ -1,3 +1,8 @@
+// ===================================================================
+// Main App component
+// Path to this file: /src/App.jsx
+// ===================================================================
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';

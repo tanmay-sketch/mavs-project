@@ -1,3 +1,7 @@
+// ===================================================================
+// main.jsx
+// Path to this file: /src/main.jsx
+// ===================================================================
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { StyledEngineProvider } from '@mui/material/styles';

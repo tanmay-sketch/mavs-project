@@ -1,3 +1,8 @@
+// ===================================================================
+// ScoutNotes component
+// Path to this file: /src/components/ScoutNotes.jsx
+// ===================================================================
+
 import React, { useState } from 'react';
 import { playerData } from '../utils/loadPlayerData';
 

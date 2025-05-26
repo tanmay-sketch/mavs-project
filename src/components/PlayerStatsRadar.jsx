@@ -1,3 +1,8 @@
+// ===================================================================
+// PlayerStatsRadar component
+// Path to this file: /src/components/PlayerStatsRadar.jsx
+// ===================================================================
+
 import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,

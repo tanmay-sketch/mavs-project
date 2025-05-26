@@ -1,3 +1,8 @@
+// ===================================================================
+// PlayerCard component
+// Path to this file: /src/components/PlayerCard.jsx
+// ===================================================================
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '@mui/material/Card';

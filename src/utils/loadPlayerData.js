@@ -1,6 +1,20 @@
+// ===================================================================
+// loadPlayerData.js
+// Path to this file: /src/utils/loadPlayerData.js
+// ===================================================================
+
 import playerData from '../data/project_data.json';
 
 function getBioData(players) {
+/*
+    Get bio data for each player function
+    Args:
+        players: The player data from the json file
+    Returns:
+        A mapping of playerId to player data
+
+    Used in loadPlayerData function in src/utils/loadPlayerData.js
+*/
     return Object.entries(players.bio).reduce((acc, [id, player]) => {
         acc[id] = {
             playerId: player.playerId,
@@ -15,18 +29,34 @@ function getBioData(players) {
 }
 
 function getScoutRankings(players) {
-    // Create a mapping of rankings by playerId
+/*
+    Get scout rankings for each player function
+    Args:
+        players: The player data from the json file
+    Returns:
+        A mapping of playerId to scout rankings
+
+    Used in loadPlayerData function in src/utils/loadPlayerData.js
+*/
     return players.scoutRankings.reduce((acc, ranking) => {
         acc[ranking.playerId] = {
             ...ranking,
-            rank: ranking['ESPN Rank'] || 999999 // Use ESPN Rank as the default rank
+            rank: ranking['ESPN Rank'] || 999999 
         };
         return acc;
     }, {});
 }
 
 function getScoutingReports(players) {
-    // Create a mapping of reports by playerId
+/*
+    Get scouting reports for each player function
+    Args:
+        players: The player data from the json file
+    Returns:
+        A mapping of playerId to scouting reports
+
+    Used in loadPlayerData function in src/utils/loadPlayerData.js
+*/
     return players.scoutingReports.reduce((acc, report) => {
         if (!acc[report.playerId]) {
             acc[report.playerId] = [];
@@ -37,6 +67,15 @@ function getScoutingReports(players) {
 }
 
 function getMeasurements(players) {
+/*
+    Get measurements for each player function
+    Args:
+        players: The player data from the json file
+    Returns:
+        A mapping of playerId to measurements
+
+    Used in loadPlayerData function in src/utils/loadPlayerData.js
+*/
     return Object.entries(players.measurements).reduce((acc, [id, measurement]) => {
         acc[id] = {
             heightNoShoes: measurement.heightNoShoes,
@@ -46,101 +85,147 @@ function getMeasurements(players) {
     }, {});
 }
 
+function calculateAverages(seasons) {
+/*
+    Calculate averages for each player function
+    Args:
+        seasons: The seasons data from the json file
+    Returns:
+        A mapping of playerId to averages
+
+    Used in getSeasonAverages function in src/utils/loadPlayerData.js
+*/
+    const statsMapping = {
+        'PTS': 'pts',
+        'AST': 'ast',
+        'TRB': 'reb',  // Map TRB to 'reb'
+        'BLK': 'blk',
+        'STL': 'stl'
+    };
+    
+    if (seasons.length === 0) return null;
+
+    const totals = seasons.reduce((sum, season) => {
+        Object.entries(statsMapping).forEach(([statKey, propName]) => {
+            sum[propName] = (sum[propName] || 0) + Number(season[statKey] || 0);
+        });
+        return sum;
+    }, {});
+
+    return Object.entries(totals).reduce((avg, [stat, total]) => {
+        avg[stat] = Number((total / seasons.length).toFixed(1));
+        return avg;
+    }, {});
+}
+
 function getSeasonAverages(players) {
-    // Create a mapping of player names to IDs from bio data
+/*
+    Get season averages for each player function
+    Args:
+        players: The player data from the json file
+    Returns:
+        A mapping of playerId to season averages
+
+    Used in loadPlayerData function in src/utils/loadPlayerData.js
+*/
+    // Create player name to ID mapping
     const nameToId = players.bio.reduce((acc, player) => {
         acc[`${player.firstName} ${player.lastName}`] = player.playerId;
         return acc;
     }, {});
 
-    // Group season logs by player name (since that's what we have in the logs)
-    const playerSeasonLogs = Object.values(players.seasonLogs).reduce((acc, season) => {
-        const playerName = season.age;
-        if (!acc[playerName]) {
-            acc[playerName] = [];
-        }
-        acc[playerName].push(season);
-        return acc;
-    }, {});
-
-    // Calculate averages for each player
-    const averages = Object.entries(playerSeasonLogs).reduce((acc, [playerName, seasons]) => {
+    // Group and calculate averages in one pass
+    return Object.values(players.seasonLogs).reduce((acc, season) => {
+        const playerName = season.age; // Player name stored in age field
         const playerId = nameToId[playerName];
-        if (!playerId) {
-            console.log('No matching ID found for player:', playerName);
-            return acc;
-        }
-
-        if (seasons.length > 0) {
-            const totalStats = seasons.reduce((sum, season) => ({
-                pts: sum.pts + Number(season.PTS || 0),
-                ast: sum.ast + Number(season.AST || 0),
-                reb: sum.reb + Number(season.TRB || 0),
-                blk: sum.blk + Number(season.BLK || 0),
-                stl: sum.stl + Number(season.STL || 0)
-            }), { pts: 0, ast: 0, reb: 0, blk: 0, stl: 0 });
-
-            acc[playerId] = {
-                pts: Number((totalStats.pts / seasons.length).toFixed(1)),
-                ast: Number((totalStats.ast / seasons.length).toFixed(1)),
-                reb: Number((totalStats.reb / seasons.length).toFixed(1)),
-                blk: Number((totalStats.blk / seasons.length).toFixed(1)),
-                stl: Number((totalStats.stl / seasons.length).toFixed(1))
+        
+        if (!playerId) return acc;
+        
+        if (!acc[playerId]) {
+            acc[playerId] = calculateAverages([season]) || {
+                pts: 0,
+                ast: 0,
+                reb: 0,
+                blk: 0,
+                stl: 0
             };
+        } else {
+            const newAverages = calculateAverages(
+                Object.values(players.seasonLogs).filter(s => s.age === playerName)
+            );
+            if (newAverages) {
+                acc[playerId] = newAverages;
+            }
         }
-
+        
         return acc;
     }, {});
-
-    return averages;
 }
 
-async function loadPlayerData(sortBy = 'rank') {
-    const bioData = getBioData(playerData);
-    const rankings = getScoutRankings(playerData);
-    const scoutingReports = getScoutingReports(playerData);
-    const measurements = getMeasurements(playerData);
-    const seasonAverages = getSeasonAverages(playerData);
+function calculateDetailedStats(seasons) {
+/* 
+    Calculate detailed stats for each player function
+    Args:
+        seasons: The seasons data from the json file
+    Returns:
+        A mapping of playerId to detailed stats
 
-    // Combine all data
-    const formattedPlayers = Object.keys(bioData).map(id => {
-        const playerId = bioData[id].playerId;
-        const stats = seasonAverages[playerId] || { pts: 0, ast: 0, reb: 0, blk: 0, stl: 0 };
-        const ranking = rankings[playerId] || { rank: 999999 }; // Use high number for unranked players
-        
-        return {
-            ...bioData[id],
-            ...ranking,
-            scoutingReports: scoutingReports[playerId] || [],
-            ...measurements[id],
-            ...stats
-        };
+    Used in getPlayerStats function in src/utils/loadPlayerData.js
+*/
+    if (seasons.length === 0) return null;
+
+    const statFields = {
+        basic: ['FGM', 'FGA', '3PM', '3PA', 'FT', 'FTA', 'ORB', 'DRB', 'TRB', 
+                'AST', 'STL', 'BLK', 'TOV', 'PF', 'PTS', 'GP', 'GS', 'MP'],
+        calculated: [
+            { name: 'fgPercent', calc: (stats) => (stats.FGM / stats.FGA * 100) },
+            { name: 'threePercent', calc: (stats) => (stats['3PM'] / stats['3PA'] * 100) },
+            { name: 'ftPercent', calc: (stats) => (stats.FT / stats.FTA * 100) }
+        ]
+    };
+
+    // Calculate totals in one pass
+    const totals = seasons.reduce((sum, season) => {
+        statFields.basic.forEach(field => {
+            sum[field] = (sum[field] || 0) + Number(season[field] || 0);
+        });
+        return sum;
+    }, {});
+
+    // Calculate averages and percentages
+    const averages = statFields.basic.reduce((avg, field) => {
+        avg[field.toLowerCase()] = Number((totals[field] / seasons.length).toFixed(1));
+        return avg;
+    }, {});
+
+    // Add calculated percentages
+    statFields.calculated.forEach(({ name, calc }) => {
+        averages[name] = Number(calc(totals).toFixed(1));
     });
 
-    // Sort players by the specified stat (default to rank)
-    return formattedPlayers.sort((a, b) => {
-        if (sortBy === 'rank') {
-            // For rank, lower is better, so we sort ascending
-            const rankA = a.rank || 999999;
-            const rankB = b.rank || 999999;
-            if (rankA === rankB) {
-                return a.name.localeCompare(b.name);
-            }
-            return rankA - rankB;
-        } else {
-            // For other stats, higher is better, so we sort descending
-            const valA = b[sortBy] || 0;
-            const valB = a[sortBy] || 0;
-            if (valA === valB) {
-                return a.name.localeCompare(b.name);
-            }
-            return valA - valB;
+    const lastSeason = seasons[seasons.length - 1];
+    return {
+        seasonAverages: {
+            ...averages,
+            gamesPlayed: totals.GP,
+            gamesStarted: totals.GS,
+            lastSeason: lastSeason.Season,
+            lastTeam: lastSeason.Team,
+            lastLeague: lastSeason.League
         }
-    });
+    };
 }
 
-// Helper function to get all available stats for a player
 function getPlayerStats(playerId) {
+/*
+    Get player stats for a given playerId function
+    Args:
+        playerId: The playerId to get stats for
+    Returns:
+        A mapping of playerId to detailed stats
+
+    Used in src/components/PlayerProfile.jsx
+*/
     const player = playerData.bio.find(p => p.playerId === playerId);
     if (!player) return null;
 
@@ -158,67 +243,67 @@ function getPlayerStats(playerId) {
         return acc;
     }, {});
 
-    // Calculate season averages
-    const lastSeason = seasonLogs[seasonLogs.length - 1];
-    const numSeasons = seasonLogs.length;
-
-    const totalStats = seasonLogs.reduce((sum, season) => ({
-        fgm: sum.fgm + Number(season.FGM || 0),
-        fga: sum.fga + Number(season.FGA || 0),
-        threePm: sum.threePm + Number(season['3PM'] || 0),
-        threePa: sum.threePa + Number(season['3PA'] || 0),
-        ft: sum.ft + Number(season.FT || 0),
-        fta: sum.fta + Number(season.FTA || 0),
-        orb: sum.orb + Number(season.ORB || 0),
-        drb: sum.drb + Number(season.DRB || 0),
-        trb: sum.trb + Number(season.TRB || 0),
-        ast: sum.ast + Number(season.AST || 0),
-        stl: sum.stl + Number(season.STL || 0),
-        blk: sum.blk + Number(season.BLK || 0),
-        tov: sum.tov + Number(season.TOV || 0),
-        pf: sum.pf + Number(season.PF || 0),
-        pts: sum.pts + Number(season.PTS || 0),
-        gp: sum.gp + Number(season.GP || 0),
-        gs: sum.gs + Number(season.GS || 0),
-        mp: sum.mp + Number(season.MP || 0)
-    }), {
-        fgm: 0, fga: 0, threePm: 0, threePa: 0,
-        ft: 0, fta: 0, orb: 0, drb: 0, trb: 0,
-        ast: 0, stl: 0, blk: 0, tov: 0, pf: 0,
-        pts: 0, gp: 0, gs: 0, mp: 0
-    });
-
     return {
-        seasonAverages: {
-            fgm: Number((totalStats.fgm / numSeasons).toFixed(1)),
-            fga: Number((totalStats.fga / numSeasons).toFixed(1)),
-            fgPercent: Number((totalStats.fgm / totalStats.fga * 100).toFixed(1)),
-            threePm: Number((totalStats.threePm / numSeasons).toFixed(1)),
-            threePa: Number((totalStats.threePa / numSeasons).toFixed(1)),
-            threePercent: Number((totalStats.threePm / totalStats.threePa * 100).toFixed(1)),
-            ft: Number((totalStats.ft / numSeasons).toFixed(1)),
-            fta: Number((totalStats.fta / numSeasons).toFixed(1)),
-            ftPercent: Number((totalStats.ft / totalStats.fta * 100).toFixed(1)),
-            orb: Number((totalStats.orb / numSeasons).toFixed(1)),
-            drb: Number((totalStats.drb / numSeasons).toFixed(1)),
-            trb: Number((totalStats.trb / numSeasons).toFixed(1)),
-            ast: Number((totalStats.ast / numSeasons).toFixed(1)),
-            stl: Number((totalStats.stl / numSeasons).toFixed(1)),
-            blk: Number((totalStats.blk / numSeasons).toFixed(1)),
-            tov: Number((totalStats.tov / numSeasons).toFixed(1)),
-            pf: Number((totalStats.pf / numSeasons).toFixed(1)),
-            pts: Number((totalStats.pts / numSeasons).toFixed(1)),
-            gp: Math.round(totalStats.gp / numSeasons),
-            gs: Math.round(totalStats.gs / numSeasons),
-            mp: Number((totalStats.mp / numSeasons).toFixed(1)),
-            gamesPlayed: totalStats.gp,
-            gamesStarted: totalStats.gs,
-            lastSeason: lastSeason.Season,
-            lastTeam: lastSeason.Team,
-            lastLeague: lastSeason.League
-        },
+        ...calculateDetailedStats(seasonLogs),
         logsBySeason
     };
+}
+
+async function loadPlayerData(sortBy = 'rank') {
+/*
+    Load player data function
+    Args:
+        sortBy: The stat to sort by (default is 'rank')
+    Returns:
+        A sorted array of players
+
+    Used in src/components/Board.jsx
+*/
+    const bioData = getBioData(playerData);
+    const rankings = getScoutRankings(playerData);
+    const scoutingReports = getScoutingReports(playerData);
+    const measurements = getMeasurements(playerData);
+    const seasonAverages = getSeasonAverages(playerData);
+
+    // Combine all data
+    const formattedPlayers = Object.keys(bioData).map(id => {
+        const playerId = bioData[id].playerId;
+        const stats = seasonAverages[playerId] || { 
+            pts: 0, 
+            ast: 0, 
+            reb: 0, 
+            blk: 0, 
+            stl: 0 
+        };
+        const ranking = rankings[playerId] || { rank: 999999 };
+        
+        return {
+            ...bioData[id],
+            ...ranking,
+            ...stats, // Spread stats directly into player object
+            scoutingReports: scoutingReports[playerId] || [],
+            ...measurements[id]
+        };
+    });
+
+    // Sort players by the specified stat
+    return formattedPlayers.sort((a, b) => {
+        if (sortBy === 'rank') {
+            const rankA = a.rank || 999999;
+            const rankB = b.rank || 999999;
+            if (rankA === rankB) {
+                return a.name.localeCompare(b.name);
+            }
+            return rankA - rankB;
+        } else {
+            const valA = b[sortBy] || 0;
+            const valB = a[sortBy] || 0;
+            if (valA === valB) {
+                return a.name.localeCompare(b.name);
+            }
+            return valA - valB;
+        }
+    });
 }
 
 // Export the functions and data

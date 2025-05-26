@@ -1,3 +1,8 @@
+// ===================================================================
+// PlayerDetailsSection component
+// Path to this file: /src/components/PlayerDetailsSection.jsx
+// ===================================================================
+
 import React from 'react';
 import Avatar from '@mui/material/Avatar';
 import PersonIcon from '@mui/icons-material/Person';

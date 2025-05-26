@@ -1,3 +1,8 @@
+// ===================================================================
+// SearchAndFilter component
+// Path to this file: /src/components/SearchAndFilter.jsx
+// ===================================================================
+
 import React, { useState, useEffect } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
